@@ -1,3 +1,4 @@
 /.venv
 **tempCodeRunnerFile.py
-
+/vector_db
+**test.py
