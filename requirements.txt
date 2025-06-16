@@ -1,1 +1,6 @@
 pandas
+langchain
+langchain-huggingface
+langchain-community
+chromadb
+sentence-transformers
