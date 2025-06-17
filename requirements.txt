@@ -4,3 +4,4 @@ langchain-huggingface
 langchain-community
 chromadb
 sentence-transformers
+tqdm
