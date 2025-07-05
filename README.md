@@ -6,7 +6,7 @@ An interactive movie recommendation system powered by FastAPI, ChromaDB, and Str
 
 ## 🚀 Demo
 
-![Movie Chat Assistant Demo](assets/chat-demo-1.gif)
+![Movie Chat Assistant Demo](assets/demo-chat-1.gif)
 
 ---
 
