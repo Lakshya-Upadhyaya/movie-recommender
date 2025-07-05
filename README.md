@@ -9,6 +9,8 @@ An interactive movie recommendation system powered by FastAPI, ChromaDB, and Str
 ![Movie Chat Assistant Demo](assets/demo-chat-1.gif)
 
 ---
+## Implementation
+###[Project Demo Video](https://youtu.be/I1UxaiSmH0s)
 
 ## 💡 Features
 
