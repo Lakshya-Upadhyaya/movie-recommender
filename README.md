@@ -10,7 +10,9 @@ An interactive movie recommendation system powered by FastAPI, ChromaDB, and Str
 
 ---
 ## Implementation
-### 🎥 [Project Demo Video](https://youtu.be/I1UxaiSmH0s)
+### 🎥 [Project Demo Video 1](https://youtu.be/I1UxaiSmH0s)
+### 🎥 [Project Demo Video 2](https://youtu.be/A75R3UvDcn8)
+### 🎥 [Project Demo Video 2](https://youtu.be/727_2pb77q4)
 
 ## 💡 Features
 
