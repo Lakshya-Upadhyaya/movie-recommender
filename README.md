@@ -1,11 +1,13 @@
 # Movie Recommender Chatbot
 
-An interactive movie recommendation system powered by FastAPI, ChromaDB, and Streamlit. Get movie suggestions based on your mood, favorite actors, genres, directors and even sentiment analysis used to rank on similarity
+An interactive movie recommendation system powered by FastAPI, ChromaDB, LangChain, and Streamlit. Get movie suggestions based on your mood, favorite actors, genres, or directors — with LLM-assisted query processing using Mistral 7B and sentiment analysis to rank results based on similarity.
 
 ---
 
 ## UI
 ![App Screenshot](assets/ui.png)
+
+---
 
 ##  Demo
 
