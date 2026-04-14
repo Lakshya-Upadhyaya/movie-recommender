@@ -2,3 +2,21 @@
 **tempCodeRunnerFile.py
 /vector_db
 **test.py
+# v0 sandbox internal files
+frontend/__v0_runtime_loader.js
+frontend/__v0_devtools.tsx
+frontend/__v0_jsx-dev-runtime.ts
+frontend/.snowflake/
+frontend/.v0-trash/
+frontend/.vercel/
+frontend/next.user-config.*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Common ignores
+frontend/node_modules
+frontend/.next/
+frontend/.DS_Store
