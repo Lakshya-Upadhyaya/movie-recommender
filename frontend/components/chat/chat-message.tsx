@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { User, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export interface Message {
   id: string;
@@ -48,12 +49,25 @@ export function ChatMessage({ message }: ChatMessageProps) {
             : "bg-card border border-border/50 text-card-foreground rounded-tl-sm"
         )}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-          {message.content}
-          {!isUser && message.content && (
-            <span className="inline-block w-0.5 h-4 ml-0.5 bg-primary animate-pulse opacity-0 last:opacity-100" />
+        <div className="text-sm leading-relaxed">
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          ) : (
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2">{children}</ul>,
+                li: ({ children }) => <li className="text-sm">{children}</li>,
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
           )}
-        </p>
+          {!isUser && message.content && (
+            <span className="inline-block w-0.5 h-4 ml-0.5 bg-primary animate-pulse" />
+          )}
+        </div>
       </div>
     </div>
   );
