@@ -49,8 +49,8 @@ export function ChatInterface() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: content.trim(),
-          history: messages.map((m) => ({ role: m.role, content: m.content })),
+          query: content.trim(),
+          history: "",
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -84,14 +84,14 @@ export function ChatInterface() {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        
+
         // Parse SSE format: data: {...}\n\n
         const lines = chunk.split("\n");
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
             if (data === "[DONE]") continue;
-            
+
             try {
               const parsed = JSON.parse(data);
               if (parsed.token) {
@@ -124,12 +124,12 @@ export function ChatInterface() {
       if (error instanceof Error && error.name === "AbortError") {
         return;
       }
-      
+
       console.error("Chat error:", error);
       setIsOffline(true);
       setIsLoading(false);
       setIsStreaming(false);
-      
+
       // Remove the user message if request failed
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
     }
