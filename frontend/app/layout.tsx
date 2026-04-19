@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'CineChat - Movie Recommender AI',
+  title: 'MovieMate - Movie Recommender AI',
   description: 'Discover your next favorite film with our AI-powered movie recommendation assistant',
   generator: 'v0.app',
   icons: {

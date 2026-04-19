@@ -151,7 +151,7 @@ export function ChatInterface() {
           <Film className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">CineChat</h1>
+          <h1 className="text-lg font-semibold text-foreground">MovieMate</h1>
           <p className="text-xs text-muted-foreground">
             Your AI movie companion
           </p>
@@ -167,7 +167,7 @@ export function ChatInterface() {
                 <Film className="w-10 h-10 text-primary" />
               </div>
               <h2 className="text-2xl font-semibold text-foreground mb-2">
-                Welcome to CineChat
+                Welcome to MovieMate
               </h2>
               <p className="text-muted-foreground max-w-md leading-relaxed">
                 Tell me what kind of movies you enjoy, and I&apos;ll recommend
