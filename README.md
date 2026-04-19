@@ -4,15 +4,15 @@ An end-to-end movie recommendation system powered by a custom web-scraped datase
 
 ---
 
-## UI
+## UI HOME PAGE
 
-![App Screenshot](assets/ui_landing.png)
+![App Screenshot](assets/UI_landing.png)
 
 ---
 
-## Demo
+## UI SERVER ERROR PAGE
 
-![CineChat Demo]()
+![App Screenshot](assets/ui_error.png)
 
 ---
 
