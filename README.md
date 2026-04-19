@@ -26,7 +26,7 @@ An end-to-end movie recommendation system powered by a custom web-scraped datase
 
 ## Architecture
 
-![Flowchart](assets/flowchart.png)
+![Flowchart](assets/flowchart_v2.png)
 
 ---
 
