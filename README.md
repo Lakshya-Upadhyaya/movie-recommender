@@ -6,7 +6,7 @@ An end-to-end movie recommendation system powered by a custom web-scraped datase
 
 ## UI
 
-![App Screenshot](assets/ui.png)
+![App Screenshot](assets/ui_landing.png)
 
 ---
 
