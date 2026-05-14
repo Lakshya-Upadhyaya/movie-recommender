@@ -18,9 +18,9 @@ An end-to-end movie recommendation system powered by a custom web-scraped datase
 
 ## Implementation
 
-### [Project Demo Video 1]()
-### [Project Demo Video 2]()
-### [Project Demo Video 3]()
+### [Project Demo Video 1](https://youtu.be/ZNh-4SlSRDE)
+### [Guardrails Demo Video 2](https://youtu.be/1rhLV7yXCMQ)
+### [Backend Demo Video 3](https://youtu.be/X_A1FF6oZzk)
 
 ---
 
