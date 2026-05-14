@@ -89,6 +89,27 @@ Vector DB   →  Supabase (pgvector)
 
 ---
 
+## Database Indexes
+
+The `movies` table (30,000+ rows) uses a combination of HNSW vector indexing and GIN trigram indexes to ensure fast hybrid retrieval across both the embedding similarity search and all metadata filters.
+
+| Index Name | Column | Type | Purpose |
+|---|---|---|---|
+| `movies_pkey` | `id` | B-tree (unique) | Primary key lookup |
+| `movies_embedding_idx` | `embedding` | HNSW (`vector_cosine_ops`) | Fast approximate nearest-neighbour cosine search via pgvector |
+| `idx_movies_title` | `title` | GIN (`gin_trgm_ops`) | Fast `ILIKE '%...%'` title substring matching |
+| `idx_movies_starring` | `starring` | GIN (`gin_trgm_ops`) | Fast `ILIKE '%...%'` actor/cast substring matching |
+| `idx_movies_director` | `directed_by` | GIN (`gin_trgm_ops`) | Fast `ILIKE '%...%'` director substring matching |
+| `idx_movies_language` | `language` | GIN (`gin_trgm_ops`) | Fast `ILIKE '%...%'` language substring matching |
+
+**Why HNSW?** The `embedding` column uses an HNSW (Hierarchical Navigable Small World) index with cosine distance ops. At 30k+ rows this avoids a full sequential scan on every query — pgvector can resolve approximate nearest neighbours in sub-millisecond time.
+
+**Why GIN + trigrams?** The `pg_trgm` extension decomposes text into trigrams and stores them in a GIN index, which makes `ILIKE '%substring%'` queries index-accelerated instead of requiring a full table scan. Without this, filtering by actor or director across 30k rows would be slow.
+
+All indexes are defined in `backend/supabase_setup.sql` and are applied automatically during setup (see [Setup](#setup)).
+
+---
+
 ## How It Works
 
 ### 1. Data Collection
@@ -103,7 +124,7 @@ Before embedding, the user query is rewritten by Qwen2.5-14B into a structured f
 This aligns the query and document embedding spaces for better retrieval.
 
 ### 3. Hybrid Retrieval
-Metadata fields (actor, director, title, year) are extracted from the rewritten query and passed as SQL filters to Supabase. Vector similarity reranks within the filtered candidate pool — exact matches handled by SQL, semantic similarity handled by pgvector.
+Metadata fields (actor, director, title, year) are extracted from the rewritten query and passed as SQL filters to Supabase. Vector similarity reranks within the filtered candidate pool — exact matches handled by SQL (accelerated by GIN trigram indexes), semantic similarity handled by pgvector (accelerated by the HNSW index).
 
 ### 4. Emotion Reranking
 Retrieved candidates are reranked by cosine similarity between the query's emotion vector and each movie's precomputed emotion vector (28-dimensional RoBERTa output).
@@ -128,9 +149,24 @@ cd movie-recommender
 ```
 
 ### 2. Supabase Setup
-- Enable pgvector extension in your Supabase project
-- Run the `match_movies` RPC function from `backend/supabase_setup.sql`
-- Upload your dataset embeddings to the `movies` table
+
+All SQL (extensions, indexes, and the `match_movies` RPC function) lives in a single file:
+
+```
+backend/
+└── supabase_setup.sql   ← run this in the Supabase SQL editor
+```
+
+Open your Supabase project → **SQL Editor** → paste and run `backend/supabase_setup.sql`. It will:
+
+1. Enable required extensions (`pgvector`, `pg_trgm`)
+2. Create the `movies` table
+3. Create all six indexes (HNSW + GIN trigram)
+4. Register the `match_movies` RPC function
+
+Then upload your dataset embeddings to the `movies` table.
+
+> **Tip — adding just the function to an existing project:** If your table already exists, you can run only the `CREATE OR REPLACE FUNCTION match_movies(...)` block from the SQL editor without re-running the rest of the file.
 
 ### 3. Kaggle Secrets
 Add the following secrets in your Kaggle notebook settings:
@@ -150,6 +186,123 @@ Set the backend URL in your Vercel project environment variables:
 NEXT_PUBLIC_API_URL=https://your-ngrok-domain.ngrok-free.app
 ```
 Deploy the `frontend/` directory to Vercel.
+
+---
+
+## Repository Structure
+
+```
+movie-recommender/
+├── frontend/                  # Next.js + Tailwind app (deploy to Vercel)
+├── backend/
+│   ├── response-pipeline.ipynb   # Kaggle inference notebook (FastAPI + Qwen2.5-14B)
+│   └── supabase_setup.sql        # All DB setup: extensions, table, indexes, RPC function
+└── assets/
+```
+
+### `backend/supabase_setup.sql` contents
+
+The setup file bundles everything needed to reproduce the database from scratch:
+
+```sql
+-- 1. Extensions
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- 2. Table
+CREATE TABLE IF NOT EXISTS movies (
+    id          bigserial PRIMARY KEY,
+    title       text,
+    description text,
+    directed_by text,
+    starring    text,
+    language    text,
+    release_date text,
+    all_sentiments jsonb,
+    embedding   vector(768)   -- nomic-embed-text-v1.5 output dimension
+);
+
+-- 3. Indexes
+CREATE UNIQUE INDEX IF NOT EXISTS movies_pkey         ON movies USING btree (id);
+CREATE INDEX        IF NOT EXISTS movies_embedding_idx ON movies USING hnsw  (embedding vector_cosine_ops);
+CREATE INDEX        IF NOT EXISTS idx_movies_title     ON movies USING gin   (title       gin_trgm_ops);
+CREATE INDEX        IF NOT EXISTS idx_movies_starring  ON movies USING gin   (starring    gin_trgm_ops);
+CREATE INDEX        IF NOT EXISTS idx_movies_director  ON movies USING gin   (directed_by gin_trgm_ops);
+CREATE INDEX        IF NOT EXISTS idx_movies_language  ON movies USING gin   (language    gin_trgm_ops);
+
+-- 4. RPC function
+CREATE OR REPLACE FUNCTION match_movies(
+    query_embedding  vector,
+    match_count      int,
+    starring_filter  text    DEFAULT NULL,
+    director_filter  text    DEFAULT NULL,
+    title_filter     text    DEFAULT NULL,
+    year_filter      int     DEFAULT NULL,
+    language_filter  text    DEFAULT NULL
+)
+RETURNS TABLE (
+    id             bigint,
+    title          text,
+    description    text,
+    directed_by    text,
+    starring       text,
+    all_sentiments jsonb,
+    release_date   text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        m.id,
+        m.title,
+        m.description,
+        m.directed_by,
+        m.starring,
+        m.all_sentiments,
+        m.release_date
+    FROM movies m
+    WHERE
+        (starring_filter  IS NULL OR m.starring    ILIKE '%' || starring_filter  || '%')
+        AND (director_filter  IS NULL OR m.directed_by ILIKE '%' || director_filter  || '%')
+        AND (title_filter     IS NULL OR m.title       ILIKE '%' || title_filter     || '%')
+        AND (language_filter  IS NULL OR m.language    ILIKE '%' || language_filter  || '%')
+        AND (year_filter      IS NULL OR (
+                m.release_date ~ '^\d{2}-\d{2}-\d{4}$'
+                AND EXTRACT(YEAR FROM TO_DATE(m.release_date, 'DD-MM-YYYY')) = year_filter
+            ))
+    ORDER BY m.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$;
+```
+
+### How to add `supabase_setup.sql` to GitHub
+
+If you haven't committed the file yet:
+
+```bash
+# From the repo root
+mkdir -p backend
+# paste or save the SQL above into the file
+nano backend/supabase_setup.sql
+
+git add backend/supabase_setup.sql
+git commit -m "feat: add Supabase schema, indexes, and match_movies RPC"
+git push
+```
+
+Anyone who clones the repo then just needs to paste the file into the **Supabase SQL Editor** and run it — no separate migration tool required.
+
+> **Optional — use Supabase migrations for versioned schema management:**
+> ```bash
+> npx supabase init                          # creates supabase/ folder
+> npx supabase migration new initial_schema  # creates a timestamped .sql file
+> # paste supabase_setup.sql content into the generated file
+> git add supabase/migrations/
+> git commit -m "feat: add initial Supabase migration"
+> ```
+> This lets you track schema changes over time with `supabase db push`.
 
 ---
 
