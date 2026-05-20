@@ -1,4 +1,4 @@
-# 🎬 MovieMate — Movie Recommender Chatbot
+# MovieMate — Movie Recommender Chatbot
 
 An end-to-end movie recommendation system powered by a custom web-scraped dataset, hybrid retrieval (vector search + metadata filtering), emotion-based reranking, and a 14B parameter LLM for conversational recommendations with token streaming.
 
